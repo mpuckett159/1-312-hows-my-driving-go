@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>1-312-Hows-My-Driving</title>
+    <meta name="description" content="A cool thing made with Glitch">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+<header>
+    <h1>
+        1-312-Hows-My-Driving
+    </h1>
+</header>
+
+<main>
+    <div>
+        <form action="/license" method="GET">
+            <button type="submit">Licenses</button>
+        </form>
+        <form action="/badge" method="GET">
+            <button type="submit">Badges</button>
+        </form>
+        <form action="/name" method="GET">
+            <button type="submit">Names</button>
+        </form>
+    </div>
+    <p class="bold">{{ .title }}</p>
+    <p>Enter in a {{ .entity_name_long }}</p>
+    <form action="/{{ .lookup_url }}" method="GET">
+        <input id="{{ .lookup_url}}" name="{{ .lookup_url }}" placeholder="{{ .entity_name_short }}">
+        <button type="submit">Submit</button>
+    </form>
+    <section class="dreams">
+        {{.entityHTML}}
+    </section>
+</main>
+
+<footer>
+    <a href="{{ .data_source }}"><b>View the source data</b></a>
+    <br/>
+    <br/>
+    <a href="http://twitter.com/AetherUnbound">If I break message my mom</a>
+</footer>
+
+</body>
+</html>
