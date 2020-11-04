@@ -1,9 +1,10 @@
 <p><b>Badge #:</b> {{ .Serial }}</p>
 <p><b>Name:</b> {{ .Name }}</p>
-<p><b>Rank:</b> {{ .RankRole }}</p>
+<p><b>Rank:</b> {{ .Rank }}</p>
 <p><b>Unit Description:</b> {{ .UnitDesc }}</p>
-{% if .JobTitle %}
+<p><b>Department:</b> {{ .Department }}</p>
+{{ if ne "" .JobTitle }}
 <p><b>Job Title:</b> {{ .JobTitle }}</p>
 <p><b>Hourly Rate:</b> ${{ .HourlyRate }}</p>
-<p><b>Projected salary (w/o overtime):</b> ${{ .Projected }}</p>
-{% endif %}
+<p><b>Projected salary (w/o overtime):</b> ${{ .ProjSalary }}</p>
+{{ end }}

@@ -28,10 +28,11 @@ type License struct {
 
 // Officer : Officer structure
 type Officer struct {
-	Badge      string
+	Serial     string
 	Name       string
 	Rank       string
 	UnitDesc   string
+	Department string
 	JobTitle   string
 	HourlyRate float64
 	ProjSalary float64
@@ -44,6 +45,16 @@ var LicenseRender = gin.H{
 	"entity_name_short": "License #",
 	"data_source":       "https://data.seattle.gov/resource/enxu-fgzb",
 	"lookup_url":        "license",
+	"query_param":       "license",
+}
+
+// OfficerRender : Render data for Officer lookup view
+var OfficerRender = gin.H{
+	"title":             "Seattle Officer Badge Lookup",
+	"entity_name_long":  "badge number",
+	"entity_name_short": "Badge #",
+	"data_source":       "https://data.seattle.gov/resource/2khk-5ukd",
+	"lookup_url":        "badge",
 }
 
 // BadgeRender : Rendering data for Badge lookup view
@@ -53,6 +64,7 @@ var BadgeRender = gin.H{
 	"entity_name_short": "Badge #",
 	"data_source":       "https://data.seattle.gov/resource/2khk-5ukd",
 	"lookup_url":        "badge",
+	"query_param":       "serial",
 }
 
 // NameRender : Rendering data for Name lookup view
@@ -62,6 +74,7 @@ var NameRender = gin.H{
 	"entity_name_short": "Last name",
 	"data_source":       "https://data.seattle.gov/resource/2khk-5ukd",
 	"lookup_url":        "name",
+	"query_param":       "last_name",
 }
 
 // Convert url.Values type HTTP GET queries to map[string]string
@@ -117,27 +130,28 @@ func formatLicenseHTML(queryResults []map[string]interface{}) (templateHTML temp
 }
 
 // Format badge HTML
-func formatOfficerHTML(mergedResults []map[string]string) (templateHTML template.HTML, err error) {
+func formatOfficerHTML(queryResults []map[string]interface{}) (templateHTML template.HTML, err error) {
 	var resultSlices []string
-	for _, row := range mergedResults {
-		fullName := strings.Join([]string{row["FirstName"], row["MiddleInitMostly"], row["Surname"]}, " ")
-		hourlyRate, _ := strconv.ParseFloat(row["hourly_rate"], 32)
-		projSalary := hourlyRate * 2000
+	for _, row := range queryResults {
+		fullName := strings.Join([]string{row["first_name"].(string), row["last_name"].(string)}, " ")
+		hourlyRate, _ := strconv.ParseFloat(row["hourly_rate"].(string), 64)
 		Data := Officer{
-			Badge:      row["Serial"],
+			Serial:     "",
 			Name:       fullName,
-			Rank:       row["RankRole"],
-			UnitDesc:   row["UnitDesc"],
-			JobTitle:   row["job_title"],
+			Rank:       "",
+			UnitDesc:   "",
+			Department: row["department"].(string),
+			JobTitle:   row["job_title"].(string),
 			HourlyRate: hourlyRate,
-			ProjSalary: projSalary,
+			ProjSalary: hourlyRate * 2000,
 		}
 		templateBytes := new(bytes.Buffer)
-		if err := privateTemplates.LicenseTemplate.Execute(templateBytes, Data); err != nil {
+		if err := privateTemplates.OfficerTemplate.Execute(templateBytes, Data); err != nil {
 			fmt.Printf("Error processing template: %s", err.Error())
 		}
 		resultSlices = append(resultSlices, templateBytes.String())
 	}
+	fmt.Println(strings.Join(resultSlices, "\n"))
 	return template.HTML(strings.Join(resultSlices, "\n<br/>\n")), nil
 }
 
@@ -172,45 +186,36 @@ func renderLicense() gin.HandlerFunc {
 func renderBadge() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		badgeRenderLocal := BadgeRender
-		/*
-			queryParams := c.Request.URL.Query()
-			if len(queryParams) > 0 {
-				queryMap := convertValuesToMap(queryParams)
-				csvResults := data.SearchCSVMap(queryMap)
-				queryResults, err := sodaQuery(LicenseRender["data_source"].(string), queryMap)
-				if err != nil {
-					fmt.Printf("Error querying SODA API: %s", err)
-				}
-				resultHTML, err := formatOfficerHTML(mergedResults)
-				badgeRenderLocal["entityHTML"] = resultHTML
+		queryParams := c.Request.URL.Query()
+		if len(queryParams) > 0 {
+			queryMap := convertValuesToMap(queryParams)
+			queryResults, err := sodaQuery(LicenseRender["data_source"].(string), queryMap)
+			if err != nil {
+				fmt.Printf("Error querying SODA API: %s", err)
 			}
-			fmt.Println(queryParams)
-		*/
+			resultHTML, err := formatOfficerHTML(queryResults)
+			badgeRenderLocal["entityHTML"] = resultHTML
+		}
+		fmt.Println(queryParams)
 		c.HTML(http.StatusOK, "index.html", badgeRenderLocal)
 	}
 }
 
 func renderName() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//queryParams := c.Request.URL.Query()
-		/*
-			if len(queryParams["license"]) > 0 {
-				queryResults, err := sodaQuery(LicenseRender["data_source"].(string), "last_name", strings.Join(queryParams["name"], ","))
-				if err != nil {
-					fmt.Println("Error")
-				} else {
-					if len(queryResults) > 1 {
-
-					}
-				}
-				var rowStrings []string
-				for _, row := range queryResults {
-					rowStrings = append(rowStrings, strings.Join(row, ","))
-				}
-				fmt.Println(strings.Join(rowStrings, ","))
+		nameRenderLocal := NameRender
+		queryParams := c.Request.URL.Query()
+		if len(queryParams) > 0 {
+			queryMap := convertValuesToMap(queryParams)
+			queryResults, err := sodaQuery(nameRenderLocal["data_source"].(string), queryMap)
+			if err != nil {
+				fmt.Printf("Error querying SODA API: %s", err)
 			}
-		*/
-		c.HTML(http.StatusOK, "index.html", NameRender)
+			resultHTML, err := formatOfficerHTML(queryResults)
+			nameRenderLocal["entityHTML"] = resultHTML
+		}
+		fmt.Println(queryParams)
+		c.HTML(http.StatusOK, "index.html", nameRenderLocal)
 	}
 }
 
