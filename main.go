@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	soda "github.com/SebastiaanKlippert/go-soda"
+	"github.com/SebastiaanKlippert/go-soda"
 	"github.com/gin-gonic/gin"
 
 	privateTemplates "1-312-hows-my-driving-go/templates"
@@ -96,6 +96,7 @@ func sodaQuery(datasetURL string, queryFilterMap map[string]string) (results []m
 	resp, err := sodareq.Get()
 	if err != nil {
 		fmt.Println("Error getting data")
+		return nil, err
 	}
 	defer resp.Body.Close()
 
